@@ -8,7 +8,7 @@ from .permissions import IsAuthorOrReadOnly
 from .serializers import (
     CommentSerializer, FollowSerializer, GroupSerializer, PostSerializer
 )
-from posts.models import Comment, Follow, Group, Post
+from posts.models import Follow, Group, Post
 
 User = get_user_model()
 
@@ -41,7 +41,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 
 class GroupViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
-    viewsets.GenericViewSet):
+        viewsets.GenericViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     pagination_class = None
