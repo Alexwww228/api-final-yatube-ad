@@ -66,4 +66,3 @@ class FollowSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         validated_data.pop('user', None)
         return Follow.objects.create(user=user, **validated_data)
-    
