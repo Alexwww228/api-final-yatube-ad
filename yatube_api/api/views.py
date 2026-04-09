@@ -31,8 +31,8 @@ class CommentViewSet(viewsets.ModelViewSet):
     pagination_class = None
 
     def get_queryset(self):
-        post_id = self.kwargs.get('post_id')
-        return Comment.objects.filter(post_id=post_id)
+        post = get_object_or_404(Post, id=self.kwargs.get('post_id'))
+        return post.comments.all()
 
     def perform_create(self, serializer):
         post_id = self.kwargs.get('post_id')
@@ -41,14 +41,17 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 
 class GroupViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
-                   viewsets.GenericViewSet):
+                viewsets.GenericViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     pagination_class = None
 
 
-class FollowViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
-                    viewsets.GenericViewSet):
+class FollowViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    viewsets.GenericViewSet
+):
     serializer_class = FollowSerializer
     permission_classes = (IsAuthenticated,)
     filter_backends = (filters.SearchFilter,)
@@ -56,7 +59,7 @@ class FollowViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
     pagination_class = None
 
     def get_queryset(self):
-        return self.request.user.follower.all()
+        return Follow.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save()
+        serializer.save(user=self.request.user)
