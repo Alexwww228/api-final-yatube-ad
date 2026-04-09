@@ -41,7 +41,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 
 class GroupViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin,
-                viewsets.GenericViewSet):
+                    viewsets.GenericViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
     pagination_class = None
