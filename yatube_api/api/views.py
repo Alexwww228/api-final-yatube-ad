@@ -3,6 +3,8 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, mixins, viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.response import Response
 
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (
@@ -13,12 +15,30 @@ from posts.models import Follow, Group, Post
 User = get_user_model()
 
 
+class PostPagination(LimitOffsetPagination):
+    default_limit = 10
+    max_limit = 100
+
+
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = (IsAuthorOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('group',)
+    pagination_class = None  # по умолчанию обычный список
+
+    def list(self, request, *args, **kwargs):
+        # Если есть параметры пагинации — используем LimitOffsetPagination
+        if 'limit' in request.query_params or 'offset' in request.query_params:
+            paginator = PostPagination()
+            page = paginator.paginate_queryset(self.queryset, request)
+            serializer = self.get_serializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+
+        # Иначе обычный список
+        serializer = self.get_serializer(self.queryset, many=True)
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -34,8 +54,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         return post.comments.all()
 
     def perform_create(self, serializer):
-        post_id = self.kwargs.get('post_id')
-        post = get_object_or_404(Post, id=post_id)
+        post = get_object_or_404(Post, id=self.kwargs.get('post_id'))
         serializer.save(author=self.request.user, post=post)
 
 
