@@ -26,18 +26,22 @@ class PostViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthorOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('group',)
-    pagination_class = None  # по умолчанию обычный список
+    pagination_class = PostPagination
 
     def list(self, request, *args, **kwargs):
-        # Если есть параметры пагинации — используем LimitOffsetPagination
-        if 'limit' in request.query_params or 'offset' in request.query_params:
-            paginator = PostPagination()
-            page = paginator.paginate_queryset(self.queryset, request)
-            serializer = self.get_serializer(page, many=True)
-            return paginator.get_paginated_response(serializer.data)
+        """
+        Если есть параметры limit/offset — используем пагинацию.
+        Иначе — возвращаем обычный список всех постов.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
 
-        # Иначе обычный список
-        serializer = self.get_serializer(self.queryset, many=True)
+        if 'limit' in request.query_params or 'offset' in request.query_params:
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
     def perform_create(self, serializer):
