@@ -41,7 +41,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 
 class GroupViewSet(
-    mixins.ListModelMixin, 
+    mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
     viewsets.GenericViewSet
 ):
